@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora Mecânica — Alta Repair</title>
+<style>
+:root{
+  --navy:#002d55;
+  --navy2:#003b70;
+  --panel:#063a68;
+  --panel2:#052f56;
+  --gold:#f5c51b;
+  --gold2:#e8b800;
+  --white:#fff;
+  --muted:#c9d7e5;
+  --black:#05080b;
+  --line:rgba(255,255,255,.18);
+  --shadow:0 12px 28px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:Arial,Helvetica,sans-serif;
+  color:var(--white);
+  background:
+    radial-gradient(circle at 20% 0%,rgba(21,83,126,.42),transparent 35%),
+    linear-gradient(135deg,#06111a,#001b30 48%,#06131e);
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:1250px;margin:28px auto;padding:0 18px}
+.header{
+  border-radius:22px 22px 0 0;
+  padding:24px 28px 20px;
+  background:linear-gradient(135deg,#dfe9f1,#b9cad8);
+  color:#092f55;
+  box-shadow:var(--shadow);
+  position:relative;
+  text-align:center;
+}
+.header .badge{
+  position:absolute;left:24px;top:20px;width:76px;height:76px;border-radius:50%;
+  border:5px solid var(--gold);background:#fff;display:grid;place-items:center;
+  color:#123b5e;font-weight:900;font-size:16px;line-height:.9;
+}
+.header h1{margin:0;font-size:34px;letter-spacing:.5px}
+.header .sub{font-size:25px;color:#111;letter-spacing:1px;margin-top:3px}
+.toolbar{
+  background:#06477c;padding:12px 16px;display:flex;gap:10px;justify-content:flex-end;
+}
+.btn{
+  border:0;border-radius:12px;padding:10px 16px;font-weight:800;transition:.15s;
+}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.07)}
+.btn.gold{background:var(--gold);color:#11283b}
+.btn.dark{background:#071017;color:#fff}
+.btn.ghost{background:rgba(255,255,255,.11);color:#fff;border:1px solid var(--line)}
+.layout{
+  background:linear-gradient(180deg,#063e6e,#022d53);
+  padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:18px;
+  box-shadow:var(--shadow);
+}
+.card{
+  background:linear-gradient(180deg,#073e6c,#042f56);
+  border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:15px;
+  box-shadow:0 5px 14px rgba(0,0,0,.18);
+}
+.card h2{
+  margin:0 0 12px;font-size:17px;letter-spacing:.5px;color:#fff;
+  border-bottom:1px solid var(--line);padding-bottom:10px;
+}
+.service-list{display:grid;gap:8px}
+.service{
+  display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:10px;
+  min-height:58px;padding:8px 9px;border-radius:11px;
+  background:rgba(0,0,0,.16);border:1px solid transparent;
+}
+.service:hover{border-color:rgba(245,197,27,.35);background:rgba(0,0,0,.24)}
+.service-icon{
+  width:38px;height:38px;border-radius:9px;display:grid;place-items:center;
+  background:rgba(255,255,255,.08);font-size:21px;
+}
+.service-name{font-size:15px;line-height:1.08}
+.price{background:#03070a;padding:9px 13px;border-radius:12px;font-weight:900;white-space:nowrap}
+.add{background:var(--gold);color:#102b43;border:0;border-radius:9px;padding:8px 10px;font-weight:900}
+.row-actions{display:flex;gap:7px;align-items:center}
+.qty{
+  width:64px;background:#071017;border:1px solid #46647b;color:#fff;
+  border-radius:9px;padding:8px;text-align:center;
+}
+.cart-card{grid-column:1/-1}
+.cart-empty{color:var(--muted);text-align:center;padding:24px}
+.cart-item{
+  display:grid;grid-template-columns:1fr auto auto auto;gap:10px;align-items:center;
+  padding:11px 8px;border-bottom:1px solid var(--line)
+}
+.cart-item:last-child{border-bottom:0}
+.cart-main strong{display:block}.cart-meta{font-size:12px;color:var(--muted);margin-top:4px}
+.remove{border:0;background:#111a20;color:#fff;border-radius:8px;padding:7px 9px}
+.totals{margin-top:13px;padding-top:13px;border-top:1px solid var(--line);display:grid;gap:7px}
+.total-line{display:flex;justify-content:space-between;gap:15px}
+.total-line.grand{font-size:25px;font-weight:900;color:var(--gold);padding-top:8px}
+.tow{
+  grid-column:1/-1;
+  display:grid;grid-template-columns:1.2fr 1fr;gap:15px;align-items:stretch;
+}
+.tow-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
+.radio{
+  border:1px solid var(--line);border-radius:11px;padding:12px;background:rgba(0,0,0,.13);
+}
+.radio.active{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.radio label{display:flex;gap:9px;align-items:flex-start;font-weight:800}
+.radio small{display:block;color:var(--muted);margin:6px 0 0 25px}
+.km-wrap{display:none;margin-top:10px}.km-wrap.show{display:block}
+.field{
+  width:100%;padding:11px 12px;border-radius:10px;border:1px solid #557087;
+  background:#071017;color:#fff;outline:none;
+}
+.field:focus{border-color:var(--gold)}
+.notice{
+  grid-column:1/-1;background:#06365f;border:1px solid rgba(255,255,255,.2);
+  border-radius:13px;padding:14px 18px;color:#eef5fa;line-height:1.45;
+}
+.notice b{color:var(--gold)}
+.generator{
+  grid-column:1/-1;display:none;
+}
+.generator.show{display:block}
+.generated{
+  background:#11151a;border:1px solid #333;border-radius:11px;padding:14px;
+  white-space:pre-wrap;font-family:Consolas,monospace;min-height:70px;color:#f0f0f0;
+}
+.config-modal,.buyer-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.68);display:none;place-items:center;
+  padding:18px;z-index:20;
+}
+.config-modal.open,.buyer-modal.open{display:grid}
+.modal{
+  width:min(720px,100%);max-height:90vh;overflow:auto;
+  background:linear-gradient(180deg,#073e6c,#032b4e);border:1px solid var(--line);
+  border-radius:17px;box-shadow:0 20px 60px #000;padding:20px;
+}
+.modal h2{margin-top:0}.config-grid{display:grid;grid-template-columns:1fr 150px;gap:8px 12px}
+.config-grid label{align-self:center}
+.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:17px}
+.buyer-list{display:grid;gap:13px;margin-top:12px}
+.buyer-box{border:1px solid var(--line);border-radius:12px;padding:12px}
+.buyer-box h3{margin:0 0 9px;font-size:15px}
+.footer{
+  background:#00284b;border-radius:0 0 22px 22px;padding:15px 18px;color:#d5e1ea;
+  font-size:12px;line-height:1.45;box-shadow:var(--shadow);
+}
+@media(max-width:850px){
+  .layout{grid-template-columns:1fr}.cart-card,.tow,.notice,.generator{grid-column:auto}
+  .tow{grid-template-columns:1fr}.header .badge{position:static;margin:0 auto 8px}
+  .header h1{font-size:27px}.header .sub{font-size:20px}
+}
+@media(max-width:560px){
+  .service{grid-template-columns:35px 1fr}.service .price{grid-column:2}.service .row-actions{grid-column:2}
+  .cart-item{grid-template-columns:1fr auto}.cart-item .item-price{grid-column:1}.cart-item .remove{grid-column:2;grid-row:2}
+  .tow-options{grid-template-columns:1fr}
+}
+
+.point-page{display:none;background:linear-gradient(180deg,#063e6e,#022d53);padding:22px;border-radius:0 0 22px 22px;box-shadow:var(--shadow)}
+.point-page.show{display:block}
+.point-top{display:flex;justify-content:space-between;gap:15px;align-items:flex-start;margin-bottom:18px}
+.point-top h2{margin:3px 0 5px;font-size:25px}.point-top p{margin:0;color:var(--muted)}
+.eyebrow{font-size:11px;font-weight:900;letter-spacing:1.2px;color:var(--gold)}
+.week-badge{background:#071017;border:1px solid var(--line);border-radius:11px;padding:10px 13px;font-weight:900;white-space:nowrap}
+.point-dashboard{display:grid;grid-template-columns:1.25fr .75fr;gap:15px}
+.hours-card,.clock-card,.point-card{background:linear-gradient(180deg,#073e6c,#042f56);border:1px solid rgba(255,255,255,.2);border-radius:14px;padding:17px}
+.hours-label,.clock-label{font-size:11px;letter-spacing:1px;color:var(--muted);font-weight:900}
+.hours-value{font-size:42px;font-weight:900;margin:5px 0 13px}.hours-value small{font-size:17px;color:var(--muted)}
+.progress{height:14px;border-radius:99px;background:#071017;overflow:hidden;border:1px solid rgba(255,255,255,.1)}
+.progress-bar{height:100%;width:0;background:var(--gold);transition:width .25s}
+.progress-info{display:flex;justify-content:space-between;margin-top:7px;font-size:12px;color:var(--muted)}
+.clock-card{text-align:center}.point-status{font-size:14px;font-weight:900;margin-top:7px}.point-status.off{color:#d2dce5}.point-status.on{color:var(--gold)}
+.live-clock{font-family:Consolas,monospace;font-size:29px;font-weight:900;margin:7px 0 12px}
+.point-button{width:100%;border:0;border-radius:11px;padding:13px;font-weight:900;font-size:15px}
+.point-button.in{background:var(--gold);color:#102b43}.point-button.out{background:#11151a;color:#fff;border:1px solid var(--line)}
+.active-shift{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;margin:14px 0;padding:13px 15px;border:1px solid rgba(245,197,27,.4);border-radius:11px;background:rgba(0,0,0,.16)}
+.point-card{margin-top:15px}.point-card-head{display:flex;justify-content:space-between;gap:15px;align-items:center}.point-card h3{margin:0 0 4px}.point-card p{margin:0;color:var(--muted);font-size:12px}
+.week-group{margin-top:14px;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.week-group-head{padding:11px 13px;background:rgba(0,0,0,.2);display:flex;justify-content:space-between;gap:10px;font-weight:900}
+.week-group-head .met{color:var(--gold)}
+.shift-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:center;padding:10px 13px;border-top:1px solid var(--line);font-size:13px}
+.shift-row small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.shift-actions{display:flex;gap:5px}.shift-actions button{border:0;background:#111a20;color:#fff;border-radius:7px;padding:7px 9px}
+.no-history{text-align:center;color:var(--muted);padding:25px}
+.edit-form{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;padding:11px;background:#071017;border-top:1px solid var(--line)}
+@media(max-width:760px){.point-dashboard{grid-template-columns:1fr}.point-top{flex-direction:column}.shift-row{grid-template-columns:1fr 1fr}.edit-form{grid-template-columns:1fr 1fr}.point-card-head{align-items:flex-start;flex-direction:column}}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="badge">ALTA<br>REPAIR</div>
+    <h1>TABELA MECÂNICA</h1>
+    <div class="sub">ALTA REPAIR</div>
+  </header>
+
+  <div class="toolbar">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-right:auto">
+      <button id="calcTabBtn" class="btn gold" onclick="showTab('calc')">🧮 Calculadora</button>
+      <button id="pointTabBtn" class="btn ghost" onclick="showTab('point')">🕐 Controle de Ponto</button>
+    </div>
+    <button class="btn ghost" onclick="openConfig()">⚙ Configurações</button>
+    <button class="btn dark" onclick="clearAll()">✕ Limpar orçamento</button>
+  </div>
+
+  <main id="calcTab" class="layout">
+    <section class="card">
+      <h2>🚗 SERVIÇOS — VEÍCULOS</h2>
+      <div id="vehicles" class="service-list"></div>
+    </section>
+
+    <section class="card">
+      <h2>✈️ SERVIÇOS — AERONAVES / EQUIPAMENTOS</h2>
+      <div id="air" class="service-list"></div>
+    </section>
+
+    <section class="card cart-card">
+      <h2>🧾 ORÇAMENTO</h2>
+      <div id="cart"></div>
+      <div class="totals">
+        <div class="total-line"><span>Serviços</span><strong id="servicesTotal">$0</strong></div>
+        <div class="total-line"><span>Guincho</span><strong id="towTotal">$0</strong></div>
+        <div class="total-line grand"><span>TOTAL</span><strong id="grandTotal">$0</strong></div>
+      </div>
+    </section>
+
+    <section class="card tow">
+      <div>
+        <h2>🚚 GUINCHO DE VEÍCULOS</h2>
+        <div class="tow-options">
+          <div id="noneRadio" class="radio active">
+            <label><input type="radio" name="tow" value="none" checked onchange="setTowMode()"> Atendimento na mecânica</label>
+            <small>Sem cobrança de guincho.</small>
+          </div>
+          <div id="cityRadio" class="radio">
+            <label><input type="radio" name="tow" value="city" onchange="setTowMode()"> Cidade / abaixo do Observatório</label>
+            <small>Valor fixo de <b>$300</b>.</small>
+          </div>
+          <div id="northRadio" class="radio">
+            <label><input type="radio" name="tow" value="north" onchange="setTowMode()"> Norte / acima do Observatório</label>
+            <small><b>$300 + $50 por km</b>, da mecânica até o local.</small>
+          </div>
+        </div>
+        <div id="kmWrap" class="km-wrap">
+          <label>Distância da mecânica até o chamado (km)</label>
+          <input id="km" class="field" type="number" min="0" step="0.1" value="0" oninput="updateTotals()">
+        </div>
+      </div>
+      <div class="notice">
+        <b>Regra do guincho:</b><br>
+        Atendimento na mecânica: <b>$0 de guincho</b>.<br>
+        Abaixo do Observatório (cidade): <b>$300</b> fixos.<br>
+        Acima do Observatório (norte): <b>$300 + $50 × km</b> desde a mecânica até a localização.
+        <br><br>
+        Chamados no norte recebem os <b>$300 fixos + $50 por km</b>. Depois da chegada ao local,
+        qualquer reparação necessária é cobrada normalmente pelos serviços selecionados acima.
+      </div>
+    </section>
+
+    <section id="generator" class="card generator">
+      <h2>📋 TEXTO PARA REGISTRO — KITS / CERAS</h2>
+      <div id="generatedText" class="generated"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:10px;gap:8px">
+        <button class="btn gold" onclick="copyGenerated()">📋 Copiar texto</button>
+      </div>
+    </section>
+  </main>
+
+
+  <section id="pointTab" class="point-page">
+    <div class="point-top">
+      <div>
+        <div class="eyebrow">CONTROLE DE SERVIÇO</div>
+        <h2>🕐 Controle de Ponto</h2>
+        <p>Controle suas horas semanais de segunda a domingo. A contagem reinicia automaticamente a cada semana.</p>
+      </div>
+      <div class="week-badge" id="weekLabel">Semana atual</div>
+    </div>
+
+    <div class="point-dashboard">
+      <div class="hours-card">
+        <div class="hours-label">HORAS DA SEMANA</div>
+        <div class="hours-value"><span id="weekHours">00:00</span> <small>/ 10:00</small></div>
+        <div class="progress"><div id="weekProgress" class="progress-bar"></div></div>
+        <div class="progress-info"><span id="progressPercent">0%</span><span id="remainingHours">Faltam 10:00</span></div>
+      </div>
+
+      <div class="clock-card">
+        <div class="clock-label">STATUS</div>
+        <div id="pointStatus" class="point-status off">FORA DE SERVIÇO</div>
+        <div id="liveClock" class="live-clock">--:--:--</div>
+        <button id="pointButton" class="point-button in" type="button" onclick="togglePoint()">🟢 Entrar de serviço</button>
+      </div>
+    </div>
+
+    <div id="activeShift" class="active-shift" style="display:none">
+      <span>🟢 Expediente em andamento</span>
+      <strong>Entrada: <span id="activeEntry">--:--</span></strong>
+      <span>Tempo atual: <strong id="liveShift">00:00</strong></span>
+    </div>
+
+    <div class="point-card">
+      <div class="point-card-head">
+        <div>
+          <h3>📋 Histórico de ponto</h3>
+          <p>Todos os registros ficam salvos neste navegador.</p>
+        </div>
+        <button class="btn dark" type="button" onclick="clearPointHistory()">🗑️ Limpar histórico</button>
+      </div>
+      <div id="pointHistory"></div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    Os valores seguem a tabela Alta Repair. Use ⚙ Configurações para atualizar preços.
+    Alterações ficam salvas neste navegador. O guincho é opcional e só entra no total quando um tipo de guincho é selecionado.
+  </footer>
+</div>
+
+<div id="buyerModal" class="buyer-modal">
+  <div class="modal">
+    <h2 id="buyerTitle">Dados do comprador</h2>
+    <p style="color:var(--muted)">Este serviço precisa dos dados de quem comprou.</p>
+    <div id="buyerList" class="buyer-list"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeBuyer(false)">Cancelar</button>
+      <button class="btn gold" onclick="closeBuyer(true)">Adicionar ao orçamento</button>
+    </div>
+  </div>
+</div>
+
+<div id="configModal" class="config-modal">
+  <div class="modal">
+    <h2>⚙ Configurações de preços</h2>
+    <p style="color:var(--muted)">Altere os valores quando necessário. O navegador salva automaticamente.</p>
+    <div id="configGrid" class="config-grid"></div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="resetPrices()">Restaurar padrão</button>
+      <button class="btn dark" onclick="closeConfig()">Cancelar</button>
+      <button class="btn gold" onclick="savePrices()">Salvar alterações</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const defaults = {
+  repairVehicle:150,
+  insuranceSend:500,
+  explodedCarInsurance:600,
+  tireRepair:180,
+  emptyGas:300,
+  waxSimple:600,
+  waxPremium:1800,
+  waxDeluxe:4200,
+  aircraftInsurance:700,
+  aircraftRepair:600,
+  kitSimple:600,
+  kitAdvanced:2200,
+  wrench:700,
+  cheapFuel:1000,
+  tireSale:180,
+  towCity:300,
+  towKm:50
+};
+
+const catalog = [
+  {id:'repairVehicle',cat:'vehicles',icon:'🛠️',name:'Reparo de veículos'},
+  {id:'insuranceSend',cat:'vehicles',icon:'🛡️',name:'Mandar carro para o seguro'},
+  {id:'explodedCarInsurance',cat:'vehicles',icon:'💥',name:'Seguro para carro explodido'},
+  {id:'tireRepair',cat:'vehicles',icon:'🛞',name:'Troca de pneu e reparo'},
+  {id:'emptyGas',cat:'vehicles',icon:'⛽',name:'Galão vazio de gasolina'},
+  {id:'waxSimple',cat:'vehicles',icon:'🧴',name:'Cera automotiva simples',buyer:true, label:'Cera Simples'},
+  {id:'waxPremium',cat:'vehicles',icon:'✨',name:'Cera automotiva premium',buyer:true, label:'Cera Premium'},
+  {id:'waxDeluxe',cat:'vehicles',icon:'💎',name:'Cera automotiva deluxe',buyer:true, label:'Cera Deluxe'},
+  {id:'aircraftInsurance',cat:'air',icon:'🛡️',name:'Seguro de aeronaves'},
+  {id:'aircraftRepair',cat:'air',icon:'✈️',name:'Reparo de aeronaves'},
+  {id:'kitSimple',cat:'air',icon:'🔧',name:'Kit reparo simples'},
+  {id:'kitAdvanced',cat:'air',icon:'🧰',name:'Kit reparo avançado',buyer:true, label:'Kit avançado'},
+  {id:'wrench',cat:'air',icon:'🔩',name:'Chave de grifo'},
+  {id:'cheapFuel',cat:'air',icon:'⛽',name:'Venda de galão de combustível cheio'},
+  {id:'tireSale',cat:'air',icon:'🛞',name:'Venda de pneu'}
+];
+
+let prices = {...defaults};
+try { prices = {...defaults, ...(JSON.parse(localStorage.getItem('altaRepairPrices')) || {})}; } catch(e){}
+
+let cart = [];
+let buyerDraft = null;
+
+const money = n => '$' + Number(n||0).toLocaleString('pt-BR',{maximumFractionDigits:2});
+const getItem = id => catalog.find(x=>x.id===id);
+
+function renderCatalog(){
+  for(const cat of ['vehicles','air']){
+    const el = document.getElementById(cat);
+    el.innerHTML = catalog.filter(x=>x.cat===cat).map(x=>`
+      <div class="service">
+        <div class="service-icon">${x.icon}</div>
+        <div class="service-name">${x.name}</div>
+        <div class="row-actions">
+          <span class="price">${money(prices[x.id])}</span>
+          <button class="add" onclick="addService('${x.id}')">+</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function addService(id){
+  const item=getItem(id);
+  if(item.buyer){
+    openBuyer(item, 1);
+    return;
+  }
+  cart.push({id, qty:1});
+  renderCart();
+}
+
+function openBuyer(item, qty){
+  buyerDraft={item, qty};
+  document.getElementById('buyerTitle').textContent='Dados — '+item.name;
+  document.getElementById('buyerList').innerHTML=`
+    <div class="buyer-box">
+      <h3>${item.name}</h3>
+      <label>Quantidade</label>
+      <input id="buyerQty" class="field" type="number" min="1" step="1" value="${qty}">
+      <div style="height:9px"></div>
+      <label>Nome do comprador</label>
+      <input id="buyerName" class="field" type="text" placeholder="Nome completo">
+      <div style="height:9px"></div>
+      <label>Passaporte</label>
+      <input id="buyerPassport" class="field" type="text" placeholder="Número do passaporte">
+    </div>`;
+  document.getElementById('buyerModal').classList.add('open');
+  setTimeout(()=>document.getElementById('buyerName').focus(),50);
+}
+
+function closeBuyer(save){
+  if(save){
+    const qty=Math.max(1,parseInt(document.getElementById('buyerQty').value||1));
+    const name=document.getElementById('buyerName').value.trim();
+    const passport=document.getElementById('buyerPassport').value.trim();
+    if(!name || !passport){ alert('Preencha o nome e o passaporte do comprador.'); return; }
+    cart.push({id:buyerDraft.item.id,qty,name,passport});
+    renderCart();
+  }
+  buyerDraft=null;
+  document.getElementById('buyerModal').classList.remove('open');
+}
+
+function changeQty(index,value){
+  const q=Math.max(1,parseInt(value||1));
+  cart[index].qty=q;
+  renderCart();
+}
+
+function removeItem(index){cart.splice(index,1);renderCart()}
+
+function renderCart(){
+  const el=document.getElementById('cart');
+  if(!cart.length){
+    el.innerHTML='<div class="cart-empty">Nenhum serviço adicionado. Clique em <b>+</b> para montar o orçamento.</div>';
+  }else{
+    el.innerHTML=cart.map((x,i)=>{
+      const item=getItem(x.id);
+      const extra=item.buyer ? `<div class="cart-meta">Comprador: ${escapeHtml(x.name)} · Passaporte: ${escapeHtml(x.passport)}</div>` : '';
+      return `<div class="cart-item">
+        <div class="cart-main"><strong>${item.name}</strong>${extra}</div>
+        <input class="qty" type="number" min="1" value="${x.qty}" onchange="changeQty(${i},this.value)">
+        <div class="item-price"><strong>${money(prices[x.id]*x.qty)}</strong></div>
+        <button class="remove" onclick="removeItem(${i})">✕</button>
+      </div>`;
+    }).join('');
+  }
+  updateTotals();
+  updateGenerated();
+}
+
+function setTowMode(){
+  const mode=document.querySelector('input[name="tow"]:checked').value;
+  document.getElementById('noneRadio').classList.toggle('active',mode==='none');
+  document.getElementById('cityRadio').classList.toggle('active',mode==='city');
+  document.getElementById('northRadio').classList.toggle('active',mode==='north');
+  document.getElementById('kmWrap').classList.toggle('show',mode==='north');
+  updateTotals();
+}
+
+function towValue(){
+  const mode=document.querySelector('input[name="tow"]:checked').value;
+  if(mode==='none') return 0;
+  if(mode==='city') return Number(prices.towCity)||0;
+  return (Number(prices.towCity)||0) + (Number(document.getElementById('km').value)||0)*(Number(prices.towKm)||0);
+}
+
+function updateTotals(){
+  const total=cart.reduce((s,x)=>s+prices[x.id]*x.qty,0);
+  const tow=towValue();
+  document.getElementById('servicesTotal').textContent=money(total);
+  document.getElementById('towTotal').textContent=money(tow);
+  document.getElementById('grandTotal').textContent=money(total+tow);
+}
+
+function pluralLine(q, singular, plural, passport, name){
+  const word=q===1?singular:plural;
+  return `${q}X ${word} | ${passport} - ${name}`;
+}
+
+function updateGenerated(){
+  const qualifying=cart.filter(x=>getItem(x.id).buyer);
+  const box=document.getElementById('generator');
+  if(!qualifying.length){box.classList.remove('show');return}
+  box.classList.add('show');
+  const lines = qualifying.map(x=>{
+    const item=getItem(x.id);
+    if(item.id==='kitAdvanced') return pluralLine(x.qty,'Kit avançado','Kits avançados',x.passport,x.name);
+    if(item.id==='waxSimple') return pluralLine(x.qty,'Cera Simples','Ceras Simples',x.passport,x.name);
+    if(item.id==='waxPremium') return pluralLine(x.qty,'Cera Premium','Ceras Premium',x.passport,x.name);
+    return pluralLine(x.qty,item.label,item.id==='waxDeluxe'?'Ceras Deluxe':item.label+'s',x.passport,x.name);
+  });
+  // Formato exato para colar no Discord: bloco de código com três crases.
+  document.getElementById('generatedText').textContent = '```' + lines.join('\n') + '```';
+}
+
+async function copyGenerated(){
+  const text=document.getElementById('generatedText').textContent;
+  if(!text)return;
+  try{
+    await navigator.clipboard.writeText(text);
+    
+  }catch(e){
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
+    document.execCommand('copy');ta.remove();
+  }
+}
+
+function clearAll(){
+  if(!cart.length)return;
+  if(confirm('Limpar todo o orçamento?')){cart=[];renderCart();}
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+function openConfig(){
+  const grid=document.getElementById('configGrid');
+  grid.innerHTML=catalog.map(x=>`
+    <label>${x.name}</label>
+    <input class="field cfg" data-id="${x.id}" type="number" min="0" step="1" value="${prices[x.id]}">
+  `).join('')+`
+    <label>Guincho — cidade / fixo</label><input class="field cfg" data-id="towCity" type="number" min="0" step="1" value="${prices.towCity}">
+    <label>Guincho — por km</label><input class="field cfg" data-id="towKm" type="number" min="0" step="1" value="${prices.towKm}">
+  `;
+  document.getElementById('configModal').classList.add('open');
+}
+function closeConfig(){document.getElementById('configModal').classList.remove('open')}
+function savePrices(){
+  document.querySelectorAll('.cfg').forEach(i=>prices[i.dataset.id]=Number(i.value)||0);
+  localStorage.setItem('altaRepairPrices',JSON.stringify(prices));
+  renderCatalog();renderCart();closeConfig();
+  
+}
+function resetPrices(){
+  if(confirm('Restaurar todos os preços originais da tabela?')){
+    prices={...defaults};
+    localStorage.setItem('altaRepairPrices',JSON.stringify(prices));
+    openConfig();
+  }
+}
+
+
+// ===== CONTROLE DE PONTO =====
+const POINT_KEY = 'altaRepairPointHistoryV1';
+const POINT_GOAL = 10 * 60 * 60 * 1000;
+let pointData = {shifts: [], active: null};
+let editingShiftId = null;
+
+try {
+  const savedPoint = JSON.parse(localStorage.getItem(POINT_KEY));
+  if(savedPoint && Array.isArray(savedPoint.shifts)) pointData = savedPoint;
+} catch(e){}
+
+function savePointData(){
+  localStorage.setItem(POINT_KEY, JSON.stringify(pointData));
+}
+
+function pad2(n){ return String(n).padStart(2,'0'); }
+
+function weekStart(date){
+  const d = new Date(date);
+  d.setHours(0,0,0,0);
+  const day = d.getDay(); // Sunday = 0
+  const diff = day === 0 ? -6 : 1 - day;
+  d.setDate(d.getDate() + diff);
+  return d;
+}
+
+function weekKey(date){
+  const d = weekStart(date);
+  return d.toISOString().slice(0,10);
+}
+
+function formatDateTime(iso){
+  const d = new Date(iso);
+  return d.toLocaleString('pt-BR',{
+    day:'2-digit',month:'2-digit',year:'numeric',
+    hour:'2-digit',minute:'2-digit'
+  });
+}
+
+function formatTime(ms){
+  ms = Math.max(0, Math.floor(ms/60000)*60000);
+  const totalMin = Math.floor(ms/60000);
+  return pad2(Math.floor(totalMin/60)) + ':' + pad2(totalMin%60);
+}
+
+function formatWeekLabel(key){
+  const start = new Date(key + 'T00:00:00');
+  const end = new Date(start);
+  end.setDate(end.getDate()+6);
+  return start.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) +
+    ' → ' + end.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+}
+
+function currentWeekCompleted(){
+  const key = weekKey(new Date());
+  return pointData.shifts
+    .filter(s => s.week === key)
+    .reduce((sum,s) => sum + Number(s.duration||0), 0);
+}
+
+function currentWeekTotal(){
+  let total = currentWeekCompleted();
+  if(pointData.active){
+    total += Date.now() - new Date(pointData.active.entry).getTime();
+  }
+  return total;
+}
+
+function renderPoint(){
+  const now = new Date();
+  const key = weekKey(now);
+  const total = currentWeekTotal();
+  const pct = Math.min(100, (total / POINT_GOAL) * 100);
+  const remaining = Math.max(0, POINT_GOAL - total);
+
+  document.getElementById('weekLabel').textContent = 'Semana ' + formatWeekLabel(key);
+  document.getElementById('weekHours').textContent = formatTime(total);
+  document.getElementById('weekProgress').style.width = pct + '%';
+  document.getElementById('progressPercent').textContent = pct.toFixed(0) + '%';
+  document.getElementById('remainingHours').textContent =
+    remaining > 0 ? 'Faltam ' + formatTime(remaining) : 'Meta semanal cumprida!';
+
+  const status = document.getElementById('pointStatus');
+  const button = document.getElementById('pointButton');
+  const active = document.getElementById('activeShift');
+
+  if(pointData.active){
+    status.textContent = 'EM SERVIÇO';
+    status.className = 'point-status on';
+    button.textContent = '🔴 Sair de serviço';
+    button.className = 'point-button out';
+    active.style.display = 'flex';
+    document.getElementById('activeEntry').textContent =
+      formatDateTime(pointData.active.entry);
+  }else{
+    status.textContent = 'FORA DE SERVIÇO';
+    status.className = 'point-status off';
+    button.textContent = '🟢 Entrar de serviço';
+    button.className = 'point-button in';
+    active.style.display = 'none';
+  }
+
+  renderPointHistory();
+}
+
+function togglePoint(){
+  if(pointData.active){
+    const exit = new Date();
+    const entry = new Date(pointData.active.entry);
+    const duration = exit - entry;
+
+    if(duration <= 0) return;
+
+    pointData.shifts.push({
+      id: Date.now().toString(),
+      entry: entry.toISOString(),
+      exit: exit.toISOString(),
+      duration,
+      week: weekKey(entry)
+    });
+    pointData.active = null;
+  }else{
+    pointData.active = {entry:new Date().toISOString()};
+  }
+
+  savePointData();
+  renderPoint();
+}
+
+function renderPointHistory(){
+  const box = document.getElementById('pointHistory');
+  const groups = {};
+
+  pointData.shifts.forEach(s => {
+    (groups[s.week] ||= []).push(s);
+  });
+
+  const currentKey = weekKey(new Date());
+  if(!groups[currentKey] && pointData.active) groups[currentKey] = [];
+
+  const keys = Object.keys(groups).sort((a,b)=>b.localeCompare(a));
+
+  if(!keys.length){
+    box.innerHTML = '<div class="no-history">Nenhum registro de ponto ainda.</div>';
+    return;
+  }
+
+  box.innerHTML = keys.map(key => {
+    const shifts = groups[key].sort((a,b)=>new Date(a.entry)-new Date(b.entry));
+    const total = shifts.reduce((sum,s)=>sum+Number(s.duration||0),0);
+    const met = total >= POINT_GOAL;
+
+    return `<div class="week-group">
+      <div class="week-group-head">
+        <span>Semana ${formatWeekLabel(key)}</span>
+        <span class="${met?'met':''}">${formatTime(total)} / 10:00${met?' ✓':''}</span>
+      </div>
+      ${shifts.length ? shifts.map(s => `
+        <div class="shift-row" id="shift-${s.id}">
+          <div><strong>${new Date(s.entry).toLocaleDateString('pt-BR')}</strong>
+            <small>${new Date(s.entry).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</small>
+          </div>
+          <div>Saída
+            <small>${new Date(s.exit).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</small>
+          </div>
+          <div><strong>${formatTime(s.duration)}</strong><small>de trabalho</small></div>
+          <div class="shift-actions">
+            <button type="button" onclick="editShift('${s.id}')">✏️</button>
+            <button type="button" onclick="deleteShift('${s.id}')">🗑️</button>
+          </div>
+        </div>
+      `).join('') : '<div class="no-history">Nenhum expediente fechado nesta semana.</div>'}
+    </div>`;
+  }).join('');
+}
+
+function editShift(id){
+  const s = pointData.shifts.find(x=>x.id===id);
+  if(!s) return;
+  const row = document.getElementById('shift-'+id);
+  const toLocal = iso => {
+    const d = new Date(iso);
+    const offset = d.getTimezoneOffset();
+    return new Date(d.getTime()-offset*60000).toISOString().slice(0,16);
+  };
+  row.innerHTML = `<div class="edit-form" style="grid-column:1/-1">
+    <label>Entrada<input class="field" id="editIn-${id}" type="datetime-local" value="${toLocal(s.entry)}"></label>
+    <label>Saída<input class="field" id="editOut-${id}" type="datetime-local" value="${toLocal(s.exit)}"></label>
+    <div style="display:flex;gap:7px;align-items:end">
+      <button class="btn gold" type="button" onclick="saveEditedShift('${id}')">Salvar</button>
+      <button class="btn ghost" type="button" onclick="renderPointHistory()">Cancelar</button>
+    </div>
+  </div>`;
+}
+
+function saveEditedShift(id){
+  const s = pointData.shifts.find(x=>x.id===id);
+  if(!s) return;
+
+  const entry = new Date(document.getElementById('editIn-'+id).value);
+  const exit = new Date(document.getElementById('editOut-'+id).value);
+
+  if(isNaN(entry) || isNaN(exit) || exit <= entry){
+    alert('Confira as datas e horários. A saída precisa ser depois da entrada.');
+    return;
+  }
+
+  s.entry = entry.toISOString();
+  s.exit = exit.toISOString();
+  s.duration = exit - entry;
+  s.week = weekKey(entry);
+
+  savePointData();
+  renderPoint();
+}
+
+function deleteShift(id){
+  if(!confirm('Excluir este registro de ponto?')) return;
+  pointData.shifts = pointData.shifts.filter(s=>s.id!==id);
+  savePointData();
+  renderPoint();
+}
+
+function clearPointHistory(){
+  if(!pointData.shifts.length) return;
+  if(confirm('Limpar todo o histórico de ponto?')){
+    pointData.shifts = [];
+    savePointData();
+    renderPoint();
+  }
+}
+
+function updateLivePoint(){
+  const now = new Date();
+  document.getElementById('liveClock').textContent =
+    now.toLocaleTimeString('pt-BR',{hour12:false});
+
+  if(pointData.active){
+    document.getElementById('liveShift').textContent =
+      formatTime(Date.now() - new Date(pointData.active.entry).getTime());
+  }
+
+  renderPoint();
+}
+
+function showTab(tab){
+  const calc = document.getElementById('calcTab');
+  const point = document.getElementById('pointTab');
+  const calcBtn = document.getElementById('calcTabBtn');
+  const pointBtn = document.getElementById('pointTabBtn');
+
+  if(tab === 'point'){
+    calc.style.display = 'none';
+    point.classList.add('show');
+    calcBtn.className = 'btn ghost';
+    pointBtn.className = 'btn gold';
+    renderPoint();
+  }else{
+    calc.style.display = 'grid';
+    point.classList.remove('show');
+    calcBtn.className = 'btn gold';
+    pointBtn.className = 'btn ghost';
+  }
+}
+
+renderCatalog();
+renderCart();
+
+showTab('calc');
+renderPoint();
+setInterval(updateLivePoint, 1000);
+</script>
+</body>
+</html>
