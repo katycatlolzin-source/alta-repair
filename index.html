@@ -146,6 +146,22 @@ button{cursor:pointer}
 .buyer-list{display:grid;gap:13px;margin-top:12px}
 .buyer-box{border:1px solid var(--line);border-radius:12px;padding:12px}
 .buyer-box h3{margin:0 0 9px;font-size:15px}
+.buyer-field-wrap{position:relative}
+.buyer-suggestions{
+  position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;
+  background:#071017;border:1px solid #557087;border-radius:10px;
+  overflow:hidden;box-shadow:0 12px 25px rgba(0,0,0,.35);display:none;
+}
+.buyer-suggestions.show{display:block}
+.buyer-suggestion{
+  width:100%;border:0;background:#071017;color:#fff;text-align:left;
+  padding:10px 12px;display:flex;justify-content:space-between;gap:12px;
+  cursor:pointer;border-bottom:1px solid rgba(255,255,255,.08);
+}
+.buyer-suggestion:last-child{border-bottom:0}
+.buyer-suggestion:hover{background:#123b5e}
+.buyer-suggestion strong{display:block}
+.buyer-suggestion small{color:var(--muted)}
 .footer{
   background:#00284b;border-radius:0 0 22px 22px;padding:15px 18px;color:#d5e1ea;
   font-size:12px;line-height:1.45;box-shadow:var(--shadow);
@@ -422,6 +438,72 @@ function addService(id){
   renderCart();
 }
 
+const BUYERS_KEY = 'altaRepairBuyersV1';
+let buyers = {};
+try {
+  buyers = JSON.parse(localStorage.getItem(BUYERS_KEY)) || {};
+} catch(e) {
+  buyers = {};
+}
+
+function saveBuyers(){
+  localStorage.setItem(BUYERS_KEY, JSON.stringify(buyers));
+}
+
+function findBuyerMatches(query){
+  const q = String(query || '').trim().toLowerCase();
+  if(!q) return [];
+  return Object.values(buyers)
+    .filter(b => b.passport.toLowerCase().includes(q) || b.name.toLowerCase().includes(q))
+    .sort((a,b) => a.passport.localeCompare(b.passport, undefined, {numeric:true}))
+    .slice(0,8);
+}
+
+function selectBuyer(passport){
+  const buyer = buyers[String(passport)];
+  if(!buyer) return;
+  document.getElementById('buyerPassport').value = buyer.passport;
+  document.getElementById('buyerName').value = buyer.name;
+  hideBuyerSuggestions();
+}
+
+function hideBuyerSuggestions(){
+  const box=document.getElementById('buyerSuggestions');
+  if(box) box.classList.remove('show');
+}
+
+function showBuyerSuggestions(query){
+  const box=document.getElementById('buyerSuggestions');
+  if(!box) return;
+  const matches=findBuyerMatches(query);
+  if(!matches.length){
+    box.innerHTML='';
+    box.classList.remove('show');
+    return;
+  }
+  box.innerHTML=matches.map(b=>`
+    <button type="button" class="buyer-suggestion" onclick="selectBuyer(${JSON.stringify(b.passport)})">
+      <span><strong>${escapeHtml(b.name)}</strong><small>Passaporte: ${escapeHtml(b.passport)}</small></span>
+    </button>
+  `).join('');
+  box.classList.add('show');
+}
+
+function buyerPassportInput(){
+  const passport=document.getElementById('buyerPassport').value;
+  const exact=buyers[passport.trim()];
+  if(exact){
+    document.getElementById('buyerName').value=exact.name;
+    hideBuyerSuggestions();
+  }else{
+    showBuyerSuggestions(passport);
+  }
+}
+
+function buyerNameInput(){
+  showBuyerSuggestions(document.getElementById('buyerName').value);
+}
+
 function openBuyer(item, qty){
   buyerDraft={item, qty};
   document.getElementById('buyerTitle').textContent='Dados — '+item.name;
@@ -432,13 +514,20 @@ function openBuyer(item, qty){
       <input id="buyerQty" class="field" type="number" min="1" step="1" value="${qty}">
       <div style="height:9px"></div>
       <label>Nome do comprador</label>
-      <input id="buyerName" class="field" type="text" placeholder="Nome completo">
+      <div class="buyer-field-wrap">
+        <input id="buyerName" class="field" type="text" placeholder="Nome completo" autocomplete="off"
+          oninput="buyerNameInput()" onfocus="buyerNameInput()" onblur="setTimeout(hideBuyerSuggestions,150)">
+        <div id="buyerSuggestions" class="buyer-suggestions"></div>
+      </div>
       <div style="height:9px"></div>
       <label>Passaporte</label>
-      <input id="buyerPassport" class="field" type="text" placeholder="Número do passaporte">
+      <div class="buyer-field-wrap">
+        <input id="buyerPassport" class="field" type="text" placeholder="Número do passaporte" autocomplete="off"
+          oninput="buyerPassportInput()" onfocus="buyerPassportInput()" onblur="setTimeout(hideBuyerSuggestions,150)">
+      </div>
     </div>`;
   document.getElementById('buyerModal').classList.add('open');
-  setTimeout(()=>document.getElementById('buyerName').focus(),50);
+  setTimeout(()=>document.getElementById('buyerPassport').focus(),50);
 }
 
 function closeBuyer(save){
@@ -447,6 +536,11 @@ function closeBuyer(save){
     const name=document.getElementById('buyerName').value.trim();
     const passport=document.getElementById('buyerPassport').value.trim();
     if(!name || !passport){ alert('Preencha o nome e o passaporte do comprador.'); return; }
+
+    // Salva/atualiza automaticamente o cliente para futuras compras.
+    buyers[passport] = {passport, name};
+    saveBuyers();
+
     cart.push({id:buyerDraft.item.id,qty,name,passport});
     renderCart();
   }
