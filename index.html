@@ -148,7 +148,9 @@ button{cursor:pointer}
 .buyer-box h3{margin:0 0 9px;font-size:15px}
 .buyer-field-wrap{position:relative}
 .buyer-suggestions{
-  position:absolute;left:0;right:0;top:calc(100% + 4px);z-index:30;
+  position:static;
+  width:100%;
+  margin-top:4px;
   background:#071017;border:1px solid #557087;border-radius:10px;
   overflow:hidden;box-shadow:0 12px 25px rgba(0,0,0,.35);display:none;
 }
@@ -462,8 +464,10 @@ function findBuyerMatches(query){
 function selectBuyer(passport){
   const buyer = buyers[String(passport)];
   if(!buyer) return;
-  document.getElementById('buyerPassport').value = buyer.passport;
-  document.getElementById('buyerName').value = buyer.name;
+  const passportField = document.getElementById('buyerPassport');
+  const nameField = document.getElementById('buyerName');
+  if(passportField) passportField.value = buyer.passport;
+  if(nameField) nameField.value = buyer.name;
   hideBuyerSuggestions();
 }
 
@@ -482,11 +486,23 @@ function showBuyerSuggestions(query){
     return;
   }
   box.innerHTML=matches.map(b=>`
-    <button type="button" class="buyer-suggestion" onclick="selectBuyer(${JSON.stringify(b.passport)})">
+    <button type="button" class="buyer-suggestion" data-passport="${escapeHtml(b.passport)}">
       <span><strong>${escapeHtml(b.name)}</strong><small>Passaporte: ${escapeHtml(b.passport)}</small></span>
     </button>
   `).join('');
   box.classList.add('show');
+
+  // Usa eventos reais do elemento para garantir que o clique do mouse
+  // selecione o cliente antes que o campo perca o foco.
+  box.querySelectorAll('.buyer-suggestion').forEach(btn=>{
+    const choose = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      selectBuyer(btn.dataset.passport);
+    };
+    btn.addEventListener('pointerdown', choose);
+    btn.addEventListener('click', choose);
+  });
 }
 
 function buyerPassportInput(){
@@ -516,14 +532,14 @@ function openBuyer(item, qty){
       <label>Nome do comprador</label>
       <div class="buyer-field-wrap">
         <input id="buyerName" class="field" type="text" placeholder="Nome completo" autocomplete="off"
-          oninput="buyerNameInput()" onfocus="buyerNameInput()" onblur="setTimeout(hideBuyerSuggestions,150)">
-        <div id="buyerSuggestions" class="buyer-suggestions"></div>
+          oninput="buyerNameInput()" onfocus="buyerNameInput()" onblur="setTimeout(hideBuyerSuggestions,500)">
       </div>
       <div style="height:9px"></div>
       <label>Passaporte</label>
       <div class="buyer-field-wrap">
         <input id="buyerPassport" class="field" type="text" placeholder="Número do passaporte" autocomplete="off"
-          oninput="buyerPassportInput()" onfocus="buyerPassportInput()" onblur="setTimeout(hideBuyerSuggestions,150)">
+          oninput="buyerPassportInput()" onfocus="buyerPassportInput()" onblur="setTimeout(hideBuyerSuggestions,500)">
+        <div id="buyerSuggestions" class="buyer-suggestions"></div>
       </div>
     </div>`;
   document.getElementById('buyerModal').classList.add('open');
