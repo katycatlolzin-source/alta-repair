@@ -1878,14 +1878,45 @@ function updateGenerated(){
 }
 
 async function copyGenerated(){
-  const text=document.getElementById('generatedText').textContent;
+  const text=document.getElementById('generatedText').textContent.trim();
   if(!text)return;
+
+  const button=document.querySelector('#generator button[onclick="copyGenerated()"]');
+  let copied=false;
+
   try{
     await navigator.clipboard.writeText(text);
-    
+    copied=true;
   }catch(e){
-    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
-    document.execCommand('copy');ta.remove();
+    try{
+      const ta=document.createElement('textarea');
+      ta.value=text;
+      ta.style.position='fixed';
+      ta.style.opacity='0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      copied=document.execCommand('copy');
+      ta.remove();
+    }catch(err){
+      copied=false;
+    }
+  }
+
+  if(!copied){
+    alert('Não foi possível copiar o texto. Tente novamente.');
+    return;
+  }
+
+  // Copiado com sucesso: limpa somente o orçamento atual.
+  // O histórico de ponto e os passaportes salvos continuam intactos.
+  cart=[];
+  renderCart();
+
+  if(button){
+    const original=button.innerHTML;
+    button.innerHTML='✅ Copiado e pedido zerado!';
+    setTimeout(()=>button.innerHTML=original,1800);
   }
 }
 
